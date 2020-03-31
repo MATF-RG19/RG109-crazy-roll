@@ -12,5 +12,6 @@ void initialize(void);
 void setLight();
 
 void drawBall(void);
+void drawRoad(void);
 
 #endif
