@@ -8,7 +8,11 @@
 
 float animationPar = 0;
 float translationPar = 0;
-double linesPoints[5] = {3.425, 2.4, 1.375, 0.35, -0.675};
+float linesPar = 0;
+int animation_ongoing = 0;
+int timer_id = 0;
+
+
 
 
 
@@ -16,9 +20,26 @@ void on_keyboard(unsigned char key, int x, int y)
 {
     (void)x;
     (void)y;
-        switch (key) {
+    switch (key) {
         case 27:
             exit(0);
+            break;
+        case 'p':
+        case 'P':
+            animation_ongoing = 0;
+            break;
+        case 'o':
+        case 'O':
+            if(!animation_ongoing) {
+                animation_ongoing = 1;
+                glutTimerFunc(TIMER, on_timer, timer_id);
+            }
+            break;
+        case 'a':
+            translationPar += 0.1;
+            break;
+        case 'd':
+            translationPar -= 0.1;
             break;
     }
 }
@@ -98,11 +119,19 @@ void drawBall(void)
     glMaterialf(GL_FRONT, GL_SHININESS, shininess);
 
     glPushMatrix();
-        glTranslatef(0, -1, 0);
+        glTranslatef(0, -1, 0.15);
+        detectCollisionWithRoad();
         glTranslatef(-translationPar, 0, 0);
         glRotatef(-animationPar, 1, 0, 0);
         glutSolidSphere(0.3, 20, 20);
     glPopMatrix();
+}
+
+void detectCollisionWithRoad() {
+    if(translationPar < -2.9)
+        translationPar = -2.9;
+    else if(translationPar > 2.9)
+        translationPar = 2.9;
 }
 
 void drawRoad(void) {
@@ -132,15 +161,35 @@ void drawRoad(void) {
     
 
     int i;
-    for(i = 0; i < 14; i++) {
+    for(i = 0; i < 15; i++) {
         double x;
         x = -3 + i*2;
+        glPushMatrix();
+        glTranslatef(0, -linesPar, 0);
         glBegin(GL_POLYGON);
             glVertex3f(0.1,x, 0);
             glVertex3f(-0.1,x, 0);
             glVertex3f(-0.1,x+1.5, 0);
             glVertex3f(0.1,x+1.5, 0);
         glEnd();
+        glPopMatrix();
     }
     glEnable(GL_LIGHTING);
 }
+
+void on_timer(int value) {
+    if(value != timer_id)
+        return;
+    
+    animationPar += 30;
+    if(animationPar >= 2880)
+        animationPar = 0;
+    linesPar += 0.1;
+    if(linesPar >= 2)
+        linesPar = 0;
+    glutPostRedisplay();
+    
+    if(animation_ongoing)
+        glutTimerFunc(TIMER, on_timer, timer_id);
+}
+
