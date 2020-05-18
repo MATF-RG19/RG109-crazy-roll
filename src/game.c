@@ -11,8 +11,16 @@ float translationPar = 0;
 float linesPar = 0;
 int animation_ongoing = 0;
 int timer_id = 0;
+int level = 1;
 
+Obstacle obstacles[5];
 
+void initialValues() {
+    int i;
+    obstacles[0].y = 21;
+    obstacles[0].x = 1;
+    obstacles[0].vector=0.01;
+}
 
 
 
@@ -78,6 +86,7 @@ void on_display(void)
     setLight();
 
     drawRoad();
+    drawObstacle();
     drawBall();
 
     glutSwapBuffers();
@@ -90,7 +99,7 @@ void initialize(void)
 
     glutInitWindowSize(1000, 1000);
 
-    glutInitWindowPosition(400, 500);
+    glutInitWindowPosition(0 , 0);
     glutCreateWindow("Crazy roll");
     
     glutKeyboardFunc(on_keyboard);
@@ -148,10 +157,10 @@ void drawRoad(void) {
 
     glPushMatrix();
     glBegin(GL_POLYGON);
-        glVertex3f(3, -3, -0.1);
-        glVertex3f(-3, -3, -0.1);
-        glVertex3f(-3, 25, -0.1);
-        glVertex3f(3, 25, -0.1);
+        glVertex3f(3, -3, -0.01);
+        glVertex3f(-3, -3, -0.01);
+        glVertex3f(-3, 25, -0.01);
+        glVertex3f(3, 25, -0.01);
     glEnd();
     glPopMatrix();
     
@@ -184,7 +193,7 @@ void on_timer(int value) {
     animationPar += 30;
     if(animationPar >= 2880)
         animationPar = 0;
-    linesPar += 0.1;
+    linesPar += 0.05;
     if(linesPar >= 2)
         linesPar = 0;
     glutPostRedisplay();
@@ -193,3 +202,50 @@ void on_timer(int value) {
         glutTimerFunc(TIMER, on_timer, timer_id);
 }
 
+void drawObstacle(void) {
+    
+    //postavljanje materijala za prepreke
+    GLfloat ambientCoeffs[] = { 0.2, 0.2, 0.2, 1 };
+    GLfloat diffuseCoeffs[] = { 0, 0.7, 0.7, 1 };
+    GLfloat specularCoeffs[] = { 0, 1, 1, 1 };
+    GLfloat shininess = 10;
+    
+    glMaterialfv(GL_FRONT, GL_AMBIENT, ambientCoeffs);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseCoeffs);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, specularCoeffs);
+    glMaterialf(GL_FRONT, GL_SHININESS, shininess);
+
+    int i;
+
+    for(i = 0; i < level; i++) {
+        obstacles[i].x += obstacles[i].vector;
+        if(obstacles[i].x > 2.9 || obstacles[i].x < -2.9) 
+            obstacles[i].vector *= -1;
+
+        obstacles[i].y -= 0.05;
+
+        if(obstacles[i].y < -3) {
+            obstacles[i].y = 21;
+        }
+        //if(obstacles[i].y <= -1 && obstacles[i].y >= 1) 
+            detecCollisionWihtObstacles(i);
+            
+        
+        glPushMatrix();
+            glTranslatef(obstacles[i].x, obstacles[i].y, 0.3);
+            glutSolidSphere(0.3, 10, 10);
+        glPopMatrix();
+    }
+    
+}
+
+void detecCollisionWihtObstacles(int i) {
+    float   x_ball = -translationPar;
+    float   y_ball = -1;
+
+    if( sqrtf(
+        powf(obstacles[i].x - x_ball,2) +
+        powf(obstacles[i].y - y_ball,2)
+        ) < 0.6)
+        animation_ongoing=0;
+}

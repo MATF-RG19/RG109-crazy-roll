@@ -8,6 +8,9 @@ int main(int argc, char** argv) {
 
     glutInit(&argc, argv);
     initialize();   
+
+    initialValues();
+    
     glutMainLoop();
     return 0;
 }
