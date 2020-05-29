@@ -14,7 +14,7 @@ Nakon kloniranja projekta potrebno je samo izvršiti: <br />
 
 | Taster | Opis|
 | :-------------: | :-----------------: |
-| `F`     | fullscreen 
+| `f`     | fullscreen 
 | `a`  | kreći se levo |
 | `d` | kreći se desno |
 | `ESC`   | izađi iz programa |
