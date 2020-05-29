@@ -19,6 +19,7 @@ void detectCollisionWithRoad();
 void detecCollisionWihtObstacles(int);
 
 void setLight();
+void screen_size();
 
 void drawBall(void);
 void drawObstacle(void);
