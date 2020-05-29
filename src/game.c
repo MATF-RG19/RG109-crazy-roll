@@ -16,6 +16,7 @@ float score = -0.2;
 float speedPar = 0.05;
 float obstaclesPar = 0.01;
 int gameOver = 0;
+int fullscreen = 0;
 
 Obstacle obstacles[10];
 
@@ -41,6 +42,10 @@ void on_keyboard(unsigned char key, int x, int y)
     switch (key) {
         case 27:
             exit(0);
+        case 'f':
+        case 'F':
+            screen_size();
+            break;
             break;
         case ' ': 
             if(!animation_ongoing & !gameOver) {
@@ -364,4 +369,15 @@ void writeLevel() {
         }
     glPopMatrix();
     glEnable(GL_LIGHTING);
+}
+
+void screen_size() {
+    if (fullscreen == 0) {
+        glutFullScreen();
+        fullscreen = 1;
+    }
+    else {
+        glutReshapeWindow(1000, 1000);
+        fullscreen = 0;
+    }
 }
