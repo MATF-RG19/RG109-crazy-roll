@@ -12,14 +12,24 @@ float linesPar = 0;
 int animation_ongoing = 0;
 int timer_id = 0;
 int level = 1;
+float score = -0.2;
+float speedPar = 0.05;
+float obstaclesPar = 0.01;
+int gameOver = 0;
 
-Obstacle obstacles[5];
+Obstacle obstacles[10];
 
 void initialValues() {
+    srand(time(NULL));
     int i;
-    obstacles[0].y = 21;
-    obstacles[0].x = 1;
-    obstacles[0].vector=0.01;
+    for(i = 0; i<10;i++)
+    {
+        obstacles[i].y = 25;
+        obstacles[i].x = rand() % 5 - 2.5 ;
+        obstacles[i].vector=obstaclesPar *(rand()%10 -5);
+        if(obstacles[i].vector == 0)
+            obstacles[i].vector = obstaclesPar*3;
+    }
 }
 
 
@@ -32,16 +42,13 @@ void on_keyboard(unsigned char key, int x, int y)
         case 27:
             exit(0);
             break;
-        case 'p':
-        case 'P':
-            animation_ongoing = 0;
-            break;
-        case 'o':
-        case 'O':
-            if(!animation_ongoing) {
+        case ' ': 
+            if(!animation_ongoing & !gameOver) {
                 animation_ongoing = 1;
                 glutTimerFunc(TIMER, on_timer, timer_id);
             }
+            else
+                animation_ongoing = 0;
             break;
         case 'a':
             translationPar += 0.1;
@@ -81,14 +88,17 @@ void on_display(void)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    gluLookAt(0, -4, 3, 0, 0, 0, 0, 1, 0);
-    
+    gluLookAt(0, -4, 3, 0, 0, 0, 0, 1, 0);    /*GameMode*/
+    //gluLookAt(0, 0, 35, 0, 5,0, 0, 0, 1);     /*DevMode*/
+
+
     setLight();
 
     drawRoad();
     drawObstacle();
     drawBall();
-
+    writeScore();
+    writeLevel();
     glutSwapBuffers();
 }
 
@@ -128,7 +138,7 @@ void drawBall(void)
     glMaterialf(GL_FRONT, GL_SHININESS, shininess);
 
     glPushMatrix();
-        glTranslatef(0, -1, 0.15);
+        glTranslatef(0, -1, 0.3);
         detectCollisionWithRoad();
         glTranslatef(-translationPar, 0, 0);
         glRotatef(-animationPar, 1, 0, 0);
@@ -193,7 +203,7 @@ void on_timer(int value) {
     animationPar += 30;
     if(animationPar >= 2880)
         animationPar = 0;
-    linesPar += 0.05;
+    linesPar += speedPar;
     if(linesPar >= 2)
         linesPar = 0;
     glutPostRedisplay();
@@ -204,7 +214,6 @@ void on_timer(int value) {
 
 void drawObstacle(void) {
     
-    //postavljanje materijala za prepreke
     GLfloat ambientCoeffs[] = { 0.2, 0.2, 0.2, 1 };
     GLfloat diffuseCoeffs[] = { 0, 0.7, 0.7, 1 };
     GLfloat specularCoeffs[] = { 0, 1, 1, 1 };
@@ -215,19 +224,58 @@ void drawObstacle(void) {
     glMaterialfv(GL_FRONT, GL_SPECULAR, specularCoeffs);
     glMaterialf(GL_FRONT, GL_SHININESS, shininess);
 
-    int i;
+    if(score>1152 & score<1158){
+        level=10;
+        writeLevelUp();
+    }
+    else if(score>973 & score<979){
+        level=9;
+        writeLevelUp();
+    }
+    else if(score>795 & score<801){
+        level=8;
+        writeLevelUp();
+    }
+    else if(score>659 & score<665){
+        level=7;
+        writeLevelUp();
+    }
+    else if(score>505 & score<511){
+        level=6;
+        writeLevelUp();
+    }
+    else if(score>379 & score<385){
+        level=5;
+        writeLevelUp();
+    }
+    else if(score>254 & score<260){
+        level=4;
+        writeLevelUp();
+    }
+    else if(score>131 & score<137){
+        level=3;
+        writeLevelUp();
+    }
+    else if(score>65 & score<71){
+        level=2;
+        writeLevelUp();
+    }
 
+    int i;
     for(i = 0; i < level; i++) {
         obstacles[i].x += obstacles[i].vector;
-        if(obstacles[i].x > 2.9 || obstacles[i].x < -2.9) 
+        if(obstacles[i].x > 3 || obstacles[i].x < -3) 
             obstacles[i].vector *= -1;
 
-        obstacles[i].y -= 0.05;
+        obstacles[i].y -= speedPar;
 
         if(obstacles[i].y < -3) {
-            obstacles[i].y = 21;
+            obstacles[i].y = 25;
+            obstacles[i].vector=obstaclesPar *(rand()%10 -5);
+            if(obstacles[i].vector == 0)
+                obstacles[i].vector = obstaclesPar*3;
         }
-        //if(obstacles[i].y <= -1 && obstacles[i].y >= 1) 
+        if(obstacles[i].y <= 0 && obstacles[i].y >= -2) 
             detecCollisionWihtObstacles(i);
             
         
@@ -246,6 +294,74 @@ void detecCollisionWihtObstacles(int i) {
     if( sqrtf(
         powf(obstacles[i].x - x_ball,2) +
         powf(obstacles[i].y - y_ball,2)
-        ) < 0.6)
+        ) < 0.6){
         animation_ongoing=0;
+        gameOver = 1;
+        writeMessage();
+    }
+}
+
+void writeScore() {
+    glDisable(GL_LIGHTING);
+    score+=speedPar*2;
+    char s[18];
+    sprintf(s,"Score : %.1f",score);
+    int i, n = strlen(s);
+    glPushMatrix();
+        glColor3f(1, 1, 1);
+        glRasterPos3f(-5.39, 8, 0);
+        
+        for(i = 0; i < n; i++){
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, s[i]);
+        }
+    glPopMatrix();
+    glEnable(GL_LIGHTING);
+}
+
+void writeMessage() {
+    glDisable(GL_LIGHTING);
+    char *s = "GAME OVER";
+    int i, n = strlen(s);
+    glPushMatrix();
+        glColor3f(1, 0, 0);
+        glRasterPos3f(-0.38, 2, 1);
+        
+        for(i = 0; i < n; i++){
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, s[i]);
+        }
+    glPopMatrix();
+    glEnable(GL_LIGHTING);
+}
+
+void writeLevelUp() {
+    glDisable(GL_LIGHTING);
+    char *s = "LEVEL UP";
+    int i, n = strlen(s);
+    glPushMatrix();
+        glColor3f(0, 1, 0);
+        glRasterPos3f(-0.32, 2, 1);
+        
+        for(i = 0; i < n; i++){
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, s[i]);
+        }
+    glPopMatrix();
+    glEnable(GL_LIGHTING);
+}
+
+void writeLevel() {
+    speedPar = 0.05 + 0.01*level;
+    obstaclesPar = 0.01 + 0.002*level;
+    glDisable(GL_LIGHTING);
+    char s[12];
+    sprintf(s,"Level : %d",level);
+    int i, n = strlen(s);
+    glPushMatrix();
+        glColor3f(1, 1, 1);
+        glRasterPos3f(-5, 7, 0);
+        
+        for(i = 0; i < n; i++){
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, s[i]);
+        }
+    glPopMatrix();
+    glEnable(GL_LIGHTING);
 }

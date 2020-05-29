@@ -26,4 +26,8 @@ void drawRoad(void);
 
 void initialValues();
 
+void writeScore();
+void writeLevel();
+void writeLevelUp();
+void writeMessage();
 #endif
