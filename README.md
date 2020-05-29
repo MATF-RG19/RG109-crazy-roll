@@ -8,7 +8,9 @@ Cilj igrice je izbegavanje plavih loptica.
 
 ### Pokretanje: 
 Nakon kloniranja projekta potrebno je samo izvršiti: <br />
-`./crazy-roll` <br /> koji se nalazi u `src` folderu.
+`cd src` <br />
+`make` <br />
+`./crazy-roll` <br /> 
 
 ### Kontrole: 
 
