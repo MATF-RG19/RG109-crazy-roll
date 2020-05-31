@@ -269,7 +269,7 @@ void drawObstacle(void) {
     int i;
     for(i = 0; i < level; i++) {
         obstacles[i].x += obstacles[i].vector;
-        if(obstacles[i].x > 3 || obstacles[i].x < -3) 
+        if(obstacles[i].x > 2.8 || obstacles[i].x < -2.8) 
             obstacles[i].vector *= -1;
 
         obstacles[i].y -= speedPar;
