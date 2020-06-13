@@ -1,4 +1,5 @@
 #include "../includes/game.h"
+#include "../includes/image.h"
 #include <math.h>
 #include <stdlib.h>
 #include <GL/glut.h>
@@ -18,8 +19,18 @@ float obstaclesPar = 0.01;
 int gameOver = 0;
 int fullscreen = 0;
 
+float texCoords[] = {
+    3.0f, -3.0f,  
+    -3.0f, -3.0f,  
+    -3.0f, 25.0f,
+    3.0f, 25.0f   
+};
+
+static GLuint texture;
+
 Obstacle obstacles[10];
 
+/*pocetne vrednosti prepreka*/
 void initialValues() {
     srand(time(NULL));
     int i;
@@ -40,13 +51,16 @@ void on_keyboard(unsigned char key, int x, int y)
     (void)x;
     (void)y;
     switch (key) {
+        /*ESC exit*/
         case 27:
             exit(0);
+            break;
+        /*Full screen*/
         case 'f':
         case 'F':
             screen_size();
             break;
-            break;
+        /*SPACE pauza*/
         case ' ': 
             if(!animation_ongoing & !gameOver) {
                 animation_ongoing = 1;
@@ -55,15 +69,18 @@ void on_keyboard(unsigned char key, int x, int y)
             else
                 animation_ongoing = 0;
             break;
+        /*pomeranje u levo*/
         case 'a':
             translationPar += 0.1;
             break;
+        /*pomeranje u desno*/
         case 'd':
             translationPar -= 0.1;
             break;
     }
 }
 
+/*postavljanje osvetljenja*/
 void setLight()
 {
     GLfloat lightPosition[] = { -5, 1, 7, 0 };
@@ -94,7 +111,7 @@ void on_display(void)
     glLoadIdentity();
 
     gluLookAt(0, -4, 3, 0, 0, 0, 0, 1, 0);    /*GameMode*/
-    //gluLookAt(0, 0, 35, 0, 5,0, 0, 0, 1);     /*DevMode*/
+    // gluLookAt(0, 0, 35, 0, 5,0, 0, 0, 1);     /*DevMode*/
 
 
     setLight();
@@ -108,7 +125,34 @@ void on_display(void)
 }
 
 void initialize(void)
-{
+{   
+    /*ucitavanje teksture*/
+    Image* image;
+    glClearColor(0, 0, 0, 0);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+    glTexEnvf(GL_TEXTURE_ENV,
+              GL_TEXTURE_ENV_MODE,
+              GL_REPLACE);
+    image = image_init(0, 0);
+    image_read(image, "../textures/road.bmp");
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+                 image->width, image->height, 0,
+                 GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    image_done(image);
+
+    /*postavljanje osnovnih funkcija i podesavanje prozora*/
     srand(time(NULL));
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 
@@ -127,6 +171,7 @@ void initialize(void)
     
 }
 
+/*crtanje lopte*/
 void drawBall(void)
 {   
 
@@ -151,6 +196,7 @@ void drawBall(void)
     glPopMatrix();
 }
 
+/*ogranicenje da lopta ne pobegne sa puta*/
 void detectCollisionWithRoad() {
     if(translationPar < -2.9)
         translationPar = -2.9;
@@ -158,6 +204,7 @@ void detectCollisionWithRoad() {
         translationPar = 2.9;
 }
 
+/*crtanje puta*/
 void drawRoad(void) {
 
     GLfloat ambientCoeffs[] = { 0.3, 0.3, 0.3, 1 };
@@ -180,10 +227,33 @@ void drawRoad(void) {
     glPopMatrix();
     
     glDisable(GL_LIGHTING);
-    
-    glColor3f(1, 1, 1);
-    
 
+    /*pokusao sam da ubacim teksturu na put preko primera sa casa ali mi nije uspelo,
+    ne znam u cemu je problem*/
+
+    // glBindTexture(GL_TEXTURE_2D, texture);
+    // glBegin(GL_QUADS);
+    //     glNormal3f(0, 0, 1);
+
+    //     glTexCoord2f(0, 0);
+    //     glVertex3f(-3, -3, -0.01);
+
+    //     glTexCoord2f(1, 0);
+    //     glVertex3f(3, -3, -0.01);
+
+    //     glTexCoord2f(1, 1);
+    //     glVertex3f(3, 25, -0.01);
+
+    //     glTexCoord2f(0, 1);
+    //     glVertex3f(-3, 25, -0.01);
+    // glEnd();
+
+    /* Iskljucujemo aktivnu teksturu */
+    //glBindTexture(GL_TEXTURE_2D, 0);
+
+    /*crtanje 15 linija na sred puta koje simuliraju kretanje, 
+    transliraju se na dole prema linesPar koji predstavlja brzinu kretanja*/
+    glColor3f(1, 1, 1);
     int i;
     for(i = 0; i < 15; i++) {
         double x;
@@ -204,10 +274,11 @@ void drawRoad(void) {
 void on_timer(int value) {
     if(value != timer_id)
         return;
-    
+    /*rotacija lopte*/
     animationPar += 30;
     if(animationPar >= 2880)
         animationPar = 0;
+    /*kada linesPar dostigne 2, odnosno sve linije se pomere za jednu duzinu jedne linije, restartuje se pomeranje*/
     linesPar += speedPar;
     if(linesPar >= 2)
         linesPar = 0;
@@ -217,6 +288,7 @@ void on_timer(int value) {
         glutTimerFunc(TIMER, on_timer, timer_id);
 }
 
+/*crtanje prepreka*/
 void drawObstacle(void) {
     
     GLfloat ambientCoeffs[] = { 0.2, 0.2, 0.2, 1 };
@@ -229,6 +301,9 @@ void drawObstacle(void) {
     glMaterialfv(GL_FRONT, GL_SPECULAR, specularCoeffs);
     glMaterialf(GL_FRONT, GL_SHININESS, shininess);
 
+
+    /*pozicija lopti je namestena "rucno" u odnosu na brojilac score tako da
+    se svaka naredna lopta ukljucuje u igru u odredjenom trenutuku*/
     if(score>1152 & score<1158){
         level=10;
         writeLevelUp();
@@ -266,6 +341,7 @@ void drawObstacle(void) {
         writeLevelUp();
     }
 
+    /*izracunavanje pozicije prepreka*/
     int i;
     for(i = 0; i < level; i++) {
         obstacles[i].x += obstacles[i].vector;
@@ -280,10 +356,12 @@ void drawObstacle(void) {
             if(obstacles[i].vector == 0)
                 obstacles[i].vector = obstaclesPar*3;
         }
+        /*kada je prepreka u blizini lopte, posto je detekcija skupa operacija,
+        proveravamo sudar izmedju loptice i prepreke*/
         if(obstacles[i].y <= 0 && obstacles[i].y >= -2) 
             detecCollisionWihtObstacles(i);
             
-        
+        /*crtanje prepreka*/
         glPushMatrix();
             glTranslatef(obstacles[i].x, obstacles[i].y, 0.3);
             glutSolidSphere(0.3, 10, 10);
@@ -292,6 +370,7 @@ void drawObstacle(void) {
     
 }
 
+/*provera sudara*/
 void detecCollisionWihtObstacles(int i) {
     float   x_ball = -translationPar;
     float   y_ball = -1;
@@ -306,6 +385,7 @@ void detecCollisionWihtObstacles(int i) {
     }
 }
 
+/*ispis rezultata*/
 void writeScore() {
     glDisable(GL_LIGHTING);
     score+=speedPar*2;
@@ -323,6 +403,7 @@ void writeScore() {
     glEnable(GL_LIGHTING);
 }
 
+/*ispis poruke kraj igre*/
 void writeMessage() {
     glDisable(GL_LIGHTING);
     char *s = "GAME OVER";
@@ -338,6 +419,7 @@ void writeMessage() {
     glEnable(GL_LIGHTING);
 }
 
+/*ispis poruke level up*/
 void writeLevelUp() {
     glDisable(GL_LIGHTING);
     char *s = "LEVEL UP";
@@ -353,6 +435,7 @@ void writeLevelUp() {
     glEnable(GL_LIGHTING);
 }
 
+/*ispisivanje levela*/
 void writeLevel() {
     speedPar = 0.05 + 0.01*level;
     obstaclesPar = 0.01 + 0.002*level;
@@ -371,6 +454,7 @@ void writeLevel() {
     glEnable(GL_LIGHTING);
 }
 
+/*menjanje rezolucije izmedju fullscreen i predefinisane*/
 void screen_size() {
     if (fullscreen == 0) {
         glutFullScreen();

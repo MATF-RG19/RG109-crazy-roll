@@ -3,6 +3,8 @@
 #include <math.h>
 #include <stdio.h>
 #include "../includes/game.h"
+#include "../includes/image.h"
+
 
 int main(int argc, char** argv) {
 
